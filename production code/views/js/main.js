@@ -442,10 +442,11 @@ var resizePizzas = function(size) {
       }
 
     // Changed because of unneccesary repetition in the loop
-    var pizzaNodes = document.querySelectorAll(".randomPizzaContainer");
+    var pizzaNodes = document.getElementsByClassName("randomPizzaContainer");    // Changed to getElementsByClassName() due to improved speed
+    var pizzaNodesLength = pizzaNodes.length;   // Was moved out of the loop and saved into a variable to improve speed
 
     // Changed to only work on style to solve the FSL problem from before
-    for (var i = 0; i < pizzaNodes.length; i++) {
+    for (var i = 0; i < pizzaNodesLength; i++) {
       pizzaNodes[i].style.width = newWidth + "%";
     }
   }
@@ -496,10 +497,12 @@ function updatePositions() {
   window.performance.mark("mark_start_frame");
 
   var topDistance = document.body.scrollTop / 1250;   // Moved this layout read outside of the loop to eliminate FSL problem
+  var pizzaArrayLength = pizzaArray.length;   // Was moved out of the loop and saved into a variable to improve speed
+  var phase;    // Variable was declared outside the loop to remove unneccessary repetition
 
-  for (var i = 0; i < pizzaArray.length; i++) {   // Instead of selecting all the DOM elements every time the page is updated, the global pizzaArray variable is accessed
-    var phase = Math.sin(topDistance + (i % 5));
-    pizzaArray[i].style.transform = "translateX(" + (pizzaArray[i].basicLeft + 100 * phase) + "px)";    // transform: translateX() is implemented instead of left() to reduce layout time
+  for (var i = 0; i < pizzaArrayLength; i++) {   // Instead of selecting all the DOM elements every time the page is updated, the global pizzaArray variable is accessed
+    phase = Math.sin(topDistance + i % 5) * 100;
+    pizzaArray[i].style.transform = "translateX(" + phase + "px)";    // transform: translateX() is implemented instead of left() to reduce layout time
   }
 
   // User Timing API to the rescue again. Seriously, it's worth learning.
@@ -520,16 +523,23 @@ document.addEventListener('DOMContentLoaded', function() {
   var cols = 8;
   var s = 256;
 
-  // Number of pizza objects was reduced to 50. These objects are then moved up and down during scrolling to improve efficiency
-  for (var i = 0; i < 50; i++) {
+  // Here the necessary number of pizzas to fill the whole background is computed
+  var windowHeight = window.screen.height;
+  var rows = Math.floor(windowHeight / s);
+  var pizzaNr = rows * cols;
+
+  var movingPizzas = document.getElementById('movingPizzas1');    // Moved this part out of the loop to reduce repetition. Also changed to getElementByID() due to superior performance
+
+  // Number of pizza objects was reduced to dynamically match the maximum number of pizzas required to fill the screen.
+  for (var i = 0; i < pizzaNr; i++) {
     var elem = document.createElement('img');
     elem.className = 'mover';
     elem.src = "images/pizza.png";
     elem.style.height = "100px";
     elem.style.width = "73.333px";
-    elem.basicLeft = (i % cols) * s;
+    elem.style.left = i % cols * s + 'px';    // Changed to work with line 505, the transformation through the translateX() change
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
-    document.querySelector("#movingPizzas1").appendChild(elem);
+    movingPizzas.appendChild(elem);
     pizzaArray.push(elem);    // Add new Pizza element to the array
   }
   updatePositions();
